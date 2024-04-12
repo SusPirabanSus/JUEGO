@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Blackjack</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background-color: #009688;
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        #game-container {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            display: inline-block;
+            animation: fadeIn 0.5s ease-out;
+        }
+        h1 {
+            color: #333;
+            font-size: 36px;
+            margin-bottom: 20px;
+        }
+        p {
+            margin: 10px 0;
+            font-size: 24px;
+        }
+        button {
+            padding: 10px 20px;
+            margin: 10px;
+            font-size: 18px;
+            background-color: #4CAF50;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        #result {
+            font-size: 28px;
+            margin-top: 20px;
+            animation: fadeIn 0.5s ease-out;
+        }
+        .card {
+            width: 100px;
+            height: 150px;
+            background-color: #fff;
+            border-radius: 5px;
+            display: inline-block;
+            margin: 5px;
+            box-shadow: 0 0 5px rgba(0, 0, 0, 0.3);
+        }
+        .card img {
+            width: 100%;
+            height: 100%;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div id="game-container">
+        <h1>Blackjack</h1>
+        <div>
+            <p>Tu puntuación: <span id="player-score">0</span></p>
+            <p>Puntuación del crupier: <span id="dealer-score">0</span></p>
+        </div>
+        <div id="player-hand">
+            <p>Tu mano:</p>
+        </div>
+        <div id="dealer-hand">
+            <p>Mano del crupier:</p>
+        </div>
+        <button id="deal-btn">Repartir</button>
+        <button id="hit-btn" disabled>Pedir Carta</button>
+        <button id="stand-btn" disabled>Plantarse</button>
+        <button id="reset-btn">Reiniciar</button>
+        <p id="result"></p>
+        <p>hola</p>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const playerScoreDisplay = document.getElementById('player-score');
+            const dealerScoreDisplay = document.getElementById('dealer-score');
+            const resultDisplay = document.getElementById('result');
+            const playerHand = document.getElementById('player-hand');
+            const dealerHand = document.getElementById('dealer-hand');
+            const dealBtn = document.getElementById('deal-btn');
+            const hitBtn = document.getElementById('hit-btn');
+            const standBtn = document.getElementById('stand-btn');
+            const resetBtn = document.getElementById('reset-btn');
+            let playerScore = 0;
+            let dealerScore = 0;
+            let deck = [];
+
+            dealBtn.addEventListener('click', deal);
+            hitBtn.addEventListener('click', hit);
+            standBtn.addEventListener('click', stand);
+            resetBtn.addEventListener('click', resetGame);
+
+            function deal() {
+                playerHand.innerHTML = '<p>Tu mano:</p>';
+                dealerHand.innerHTML = '<p>Mano del crupier:</p>';
+                deck = getDeck();
+                playerScore = drawCard('player');
+                dealerScore = drawCard('dealer');
+                playerScore += drawCard('player');
+                dealerScore += drawCard('dealer');
+                updateScores();
+                dealBtn.disabled = true;
+                hitBtn.disabled = false;
+                standBtn.disabled = false;
+            }
+
+            function hit() {
+                if (playerScore < 21) {
+                    playerScore += drawCard('player');
+                    updateScores();
+                }
+            }
+
+            function stand() {
+                while (dealerScore < 17) {
+                    dealerScore += drawCard('dealer');
+                }
+                updateScores();
+                determineWinner();
+                dealBtn.disabled = false;
+                hitBtn.disabled = true;
+                standBtn.disabled = true;
+            }
+
+            function resetGame() {
+                playerScore = 0;
+                dealerScore = 0;
+                playerHand.innerHTML = '<p>Tu mano:</p>';
+                dealerHand.innerHTML = '<p>Mano del crupier:</p>';
+                playerScoreDisplay.textContent = playerScore;
+                dealerScoreDisplay.textContent = dealerScore;
+                resultDisplay.textContent = '';
+                dealBtn.disabled = false;
+                hitBtn.disabled = true;
+                standBtn.disabled = true;
+            }
+
+            function drawCard(player) {
+                const card = deck.pop();
+                const value = getCardValue(card);
+                const hand = player === 'player' ? playerHand : dealerHand;
+                const cardElement = document.createElement('div');
+                cardElement.classList.add('card');
+                cardElement.innerHTML = `<img src="images/corazon A.png" alt="${card}">`;
+                hand.appendChild(cardElement);
+                return value;
+            }
+
+            function getDeck() {
+                const suits = ['S', 'C', 'H', 'D'];
+                const values = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A'];
+                const deck = [];
+                for (let suit of suits) {
+                    for (let value of values) {
+                        deck.push(value + suit);
+                    }
+                }
+                return shuffle(deck);
+            }
+
+            function shuffle(deck) {
+                for (let i = deck.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [deck[i], deck[j]] = [deck[j], deck[i]];
+                }
+                return deck;
+            }
+
+            function getCardValue(card) {
+                const value = card.slice(0, -1);
+                if (value === 'A') {
+                    return 11;
+                } else if (['J', 'Q', 'K'].includes(value)) {
+                    return 10;
+                } else {
+                    return parseInt(value);
+                }
+            }
+
+            function updateScores() {
+                playerScoreDisplay.textContent = playerScore;
+                dealerScoreDisplay.textContent = dealerScore;
+            }
+
+            function determineWinner() {
+                if (playerScore > 21) {
+                    resultDisplay.textContent = 'Has perdido, te has pasado de 21.';
+                } else if (dealerScore > 21 || playerScore > dealerScore) {
+                    resultDisplay.textContent = '¡Has ganado!';
+                } else if (playerScore === dealerScore) {
+                    resultDisplay.textContent = 'Empate.';
+                } else {
+                    resultDisplay.textContent = 'Has perdido.';
+                }
+            }
+        });
+        
+    </script>
+
+    
+</body>
+</html>
